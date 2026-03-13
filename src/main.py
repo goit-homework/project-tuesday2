@@ -240,7 +240,14 @@ class AssistantBot:
     @command("sort-by-tag", "Sort notes by tags")
     def sort_by_tags(self, args):
         result = self.notebook.sort_by_tags()
-        return str(result) if result else "No notes saved."
+        if not result:
+            return "No notes saved."
+        lines = []
+        for tag, notes in result.items():
+            lines.append(f"[{tag}]")
+            for note in notes:
+                lines.append(f"  {note}")
+        return "\n".join(lines)
 
     def show_help(self):
         """Display available commands with descriptions."""
