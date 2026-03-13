@@ -20,7 +20,7 @@ class NoteBook(UserDict):
         query = query.lower()
 
         for note in self.data.values():
-            if query in note.title.lower() or query in note.body.lower():
+            if query in note.title.lower() or query in note.content.lower():
                 result.append(note)
 
         return result
@@ -35,7 +35,7 @@ class NoteBook(UserDict):
             note.title = new_title
 
         if new_body:
-            note.body = new_body
+            note.content = new_body
 
         return note
 
@@ -46,7 +46,7 @@ class NoteBook(UserDict):
         result = []
 
         for note in self.data.values():
-            if tag in note.tags:
+            if note.has_tag(tag):
                 result.append(note)
 
         return result
@@ -56,6 +56,6 @@ class NoteBook(UserDict):
 
         for note in self.data.values():
             for tag in note.tags:
-                tag_dict.setdefault(tag, []).append(note)
+                tag_dict.setdefault(str(tag), []).append(note)
 
         return dict(sorted(tag_dict.items()))

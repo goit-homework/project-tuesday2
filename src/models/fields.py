@@ -86,7 +86,3 @@ class Birthday(Field):
         return self.value.strftime("%d.%m.%Y")
 
 
-class Address(Field):
-    def __init__(self, value):
-        # TODO: store the address value
-        pass
