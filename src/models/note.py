@@ -24,7 +24,7 @@ class Tag:
 
 
 class Note:
-    def __init__(self, note_id: int, title: str, content: str):
+    def __init__(self, title: str, content: str):
         title = title.strip()
         content = content.strip()
 
@@ -33,7 +33,7 @@ class Note:
         if not content:
             raise ValueError("Note content cannot be empty.")
 
-        self.id = note_id
+        self.id = None
         self.title = title
         self.content = content
         self.tags: set[Tag] = set()
