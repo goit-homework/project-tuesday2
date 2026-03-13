@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 from datetime import datetime
 from .fields import Field
-from __future__ import annotations
 
 
 class Tag:
