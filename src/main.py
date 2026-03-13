@@ -6,22 +6,31 @@ from .utils.storage import save_data, load_data
 from .utils.suggest import suggest_command
 
 
-def command(name, description):
-    """Decorator to register a command handler."""
+def command(name, *, description, usage=None, min_args=0):
+    """Decorator to register a command handler with error handling and args validation."""
     def decorator(func):
-        func._is_command = True
-        func._command_name = name
-        func._description = description
-        return func
+        def wrapper(self, args):
+            if len(args) < min_args:
+                return f"Usage: {usage or name}"
+            try:
+                return func(self, args)
+            except (ValueError, KeyError, IndexError) as e:
+                return f"Error: {e}"
+        wrapper._is_command = True
+        wrapper._command_name = name
+        wrapper._description = description
+        wrapper._usage = usage or name
+        return wrapper
     return decorator
 
 
 class Command:
     """Represents a bot command with handler and description."""
 
-    def __init__(self, handler, description):
+    def __init__(self, handler, description, usage):
         self.handler = handler
         self.description = description
+        self.usage = usage
 
 
 class AssistantBot:
@@ -37,7 +46,7 @@ class AssistantBot:
             attr = getattr(self, attr_name)
             if callable(attr) and hasattr(attr, '_is_command'):
                 cmd_name = attr._command_name
-                self.commands[cmd_name] = Command(attr, attr._description)
+                self.commands[cmd_name] = Command(attr, attr._description, attr._usage)
 
     def parse_input(self, user_input):
         """Parse user input into command and arguments."""
@@ -47,11 +56,8 @@ class AssistantBot:
         return parts[0].strip().lower(), parts[1:]
 
     # Contact commands
-    @command("add", "Add contact with name and phone")
+    @command("add", description="Add contact with name and phone", usage="add <name> <phone>", min_args=2)
     def add_contact(self, args):
-        """Add a new contact or add phone to existing contact."""
-        if len(args) < 2:
-            return "Usage: add <name> <phone>"
         name, phone = args[0], args[1]
         record = self.book.find(name)
         if record is None:
@@ -63,10 +69,8 @@ class AssistantBot:
         record.add_phone(phone)
         return message
 
-    @command("change", "Change phone number for contact")
+    @command("change", description="Change phone number for contact", usage="change <name> <old_phone> <new_phone>", min_args=3)
     def change_contact(self, args):
-        if len(args) < 3:
-            return "Usage: change <name> <old_phone> <new_phone>"
         name, old, new = args[0], args[1], args[2]
         record = self.book.find(name)
         if not record:
@@ -74,126 +78,102 @@ class AssistantBot:
         record.edit_phone(old, new)
         return "Contact updated."
 
-    @command("phone", "Show contact phones")
+    @command("phone", description="Show contact phones", usage="phone <name>", min_args=1)
     def show_contact(self, args):
-        if len(args) < 1:
-            return "Usage: phone <name>"
         record = self.book.find(args[0])
         return str(record) if record else "Contact not found."
 
-    @command("all", "Show all contacts")
+    @command("all", description="Show all contacts")
     def show_all_contacts(self, args):
         if not self.book.data:
             return "No contacts saved."
         return "\n".join(f"{i}. {r}" for i, r in enumerate(self.book.data.values(), 1))
 
-    @command("add-birthday", "Add birthday to contact")
+    @command("add-birthday", description="Add birthday to contact", usage="add-birthday <name> <DD.MM.YYYY>", min_args=2)
     def add_birthday(self, args):
-        if len(args) < 2:
-            return "Usage: add-birthday <name> <DD.MM.YYYY>"
         record = self.book.find(args[0])
         if not record:
             return "Contact not found."
         record.add_birthday(args[1])
         return "Birthday added."
 
-    @command("show-birthday", "Show contact birthday")
+    @command("show-birthday", description="Show contact birthday", usage="show-birthday <name>", min_args=1)
     def show_birthday(self, args):
-        if len(args) < 1:
-            return "Usage: show-birthday <name>"
         record = self.book.find(args[0])
         if not record:
             return "Contact not found."
         return str(record.birthday) if record.birthday else "Birthday not set."
 
-    @command("birthdays", "Show upcoming birthdays")
+    @command("birthdays", description="Show upcoming birthdays", usage="birthdays [days]")
     def upcoming_birthdays(self, args):
         days = int(args[0]) if args else 7
         result = self.book.get_upcoming_birthdays(days)
         return str(result) if result else f"No birthdays in the next {days} days."
 
-    @command("add-email", "Add email to contact")
+    @command("add-email", description="Add email to contact", usage="add-email <name> <email>", min_args=2)
     def add_email(self, args):
-        if len(args) < 2:
-            return "Usage: add-email <name> <email>"
         record = self.book.find(args[0])
         if not record:
             return "Contact not found."
         record.add_email(args[1])
         return "Email added."
 
-    @command("edit-email", "Edit contact email")
+    @command("edit-email", description="Edit contact email", usage="edit-email <name> <email>", min_args=2)
     def edit_email(self, args):
-        if len(args) < 2:
-            return "Usage: edit-email <name> <email>"
         record = self.book.find(args[0])
         if not record:
             return "Contact not found."
         record.edit_email(args[1])
         return "Email updated."
 
-    @command("add-address", "Add address to contact")
+    @command("add-address", description="Add address to contact", usage="add-address <name> <address>", min_args=2)
     def add_address(self, args):
-        if len(args) < 2:
-            return "Usage: add-address <name> <address>"
         record = self.book.find(args[0])
         if not record:
             return "Contact not found."
         record.add_address(" ".join(args[1:]))
         return "Address added."
 
-    @command("edit-address", "Edit contact address")
+    @command("edit-address", description="Edit contact address", usage="edit-address <name> <address>", min_args=2)
     def edit_address(self, args):
-        if len(args) < 2:
-            return "Usage: edit-address <name> <address>"
         record = self.book.find(args[0])
         if not record:
             return "Contact not found."
         record.edit_address(" ".join(args[1:]))
         return "Address updated."
 
-    @command("search", "Search contacts by query")
+    @command("search", description="Search contacts by query", usage="search <query>", min_args=1)
     def search_contacts(self, args):
-        if len(args) < 1:
-            return "Usage: search <query>"
         results = self.book.search(" ".join(args))
         return "\n".join(str(r) for r in results) if results else "No contacts found."
 
-    @command("delete", "Delete contact")
+    @command("delete", description="Delete contact", usage="delete <name>", min_args=1)
     def delete_contact(self, args):
-        if len(args) < 1:
-            return "Usage: delete <name>"
         self.book.delete(args[0])
         return f"Contact {args[0]} deleted."
 
     # Note commands
-    @command("add-note", "Add new note")
+    @command("add-note", description="Add new note", usage="add-note <title>", min_args=1)
     def add_note(self, args):
-        if len(args) < 1:
-            return "Usage: add-note <title>"
         title = " ".join(args)
         body = input("Enter note body: ")
         note = Note(title, body)
         self.notebook.add_note(note)
         return f"Note '{title}' added."
 
-    @command("show-notes", "Show all notes")
+    @command("show-notes", description="Show all notes")
     def show_all_notes(self, args):
         if not self.notebook.data:
             return "No notes saved."
         return "\n".join(str(n) for n in self.notebook.data.values())
 
-    @command("find-note", "Find note by query")
+    @command("find-note", description="Find note by query", usage="find-note <query>", min_args=1)
     def find_note(self, args):
-        if len(args) < 1:
-            return "Usage: find-note <query>"
         results = self.notebook.search(" ".join(args))
         return "\n".join(str(n) for n in results) if results else "No notes found."
 
-    @command("edit-note", "Edit note by ID")
+    @command("edit-note", description="Edit note by ID", usage="edit-note <id>", min_args=1)
     def edit_note(self, args):
-        if len(args) < 1:
-            return "Usage: edit-note <id>"
         note_id = int(args[0])
         note = self.notebook.find_by_id(note_id)
         if not note:
@@ -203,41 +183,33 @@ class AssistantBot:
         self.notebook.edit_note(note_id, title or None, body or None)
         return "Note updated."
 
-    @command("delete-note", "Delete note by ID")
+    @command("delete-note", description="Delete note by ID", usage="delete-note <id>", min_args=1)
     def delete_note(self, args):
-        if len(args) < 1:
-            return "Usage: delete-note <id>"
         self.notebook.delete(int(args[0]))
         return "Note deleted."
 
-    @command("add-tag", "Add tag to note")
+    @command("add-tag", description="Add tag to note", usage="add-tag <note_id> <tag>", min_args=2)
     def add_tag(self, args):
-        if len(args) < 2:
-            return "Usage: add-tag <note_id> <tag>"
         note = self.notebook.find_by_id(int(args[0]))
         if not note:
             return "Note not found."
         note.add_tag(args[1])
         return "Tag added."
 
-    @command("remove-tag", "Remove tag from note")
+    @command("remove-tag", description="Remove tag from note", usage="remove-tag <note_id> <tag>", min_args=2)
     def remove_tag(self, args):
-        if len(args) < 2:
-            return "Usage: remove-tag <note_id> <tag>"
         note = self.notebook.find_by_id(int(args[0]))
         if not note:
             return "Note not found."
         note.remove_tag(args[1])
         return "Tag removed."
 
-    @command("find-by-tag", "Find notes by tag")
+    @command("find-by-tag", description="Find notes by tag", usage="find-by-tag <tag>", min_args=1)
     def find_by_tag(self, args):
-        if len(args) < 1:
-            return "Usage: find-by-tag <tag>"
         results = self.notebook.find_by_tag(args[0])
         return "\n".join(str(n) for n in results) if results else "No notes with this tag."
 
-    @command("sort-by-tag", "Sort notes by tags")
+    @command("sort-by-tag", description="Sort notes by tags")
     def sort_by_tags(self, args):
         result = self.notebook.sort_by_tags()
         if not result:
@@ -249,16 +221,16 @@ class AssistantBot:
                 lines.append(f"  {note}")
         return "\n".join(lines)
 
-    @command("hello", "Greet the bot")
+    @command("hello", description="Greet the bot")
     def hello(self, args):
         return "How can I help you?"
 
-    @command("help", "Show available commands")
+    @command("help", description="Show available commands")
     def show_help(self, args):
         lines = ["\nAvailable commands:", "-" * 70]
         for cmd_name, cmd in sorted(self.commands.items()):
-            lines.append(f"  {cmd_name:<20} - {cmd.description}")
-        lines.append(f"  {'close / exit':<20} - Exit and save")
+            lines.append(f"  {cmd.usage:<40} - {cmd.description}")
+        lines.append(f"  {'close / exit':<40} - Exit and save")
         lines.append("-" * 70)
         return "\n".join(lines)
 
@@ -279,13 +251,9 @@ class AssistantBot:
                 print("Good bye!")
                 break
             elif command in self.commands:
-                try:
-                    cmd = self.commands[command]
-                    result = cmd.handler(args)
-                    if result:
-                        print(result)
-                except Exception as e:
-                    print(f"Error: {e}")
+                result = self.commands[command].handler(args)
+                if result:
+                    print(result)
             else:
                 suggestion = suggest_command(command, list(self.commands.keys()))
                 if suggestion:
