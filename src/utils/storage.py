@@ -8,12 +8,14 @@ DATA_FILE = DATA_DIR / "data.pkl"
 
 
 def save_data(book, notebook):
-    """TODO: serialize book and notebook to DATA_FILE using pickle."""
-    pass
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with open(DATA_FILE, "wb") as f:
+        pickle.dump((book, notebook), f)
 
 
 def load_data():
-    """TODO: deserialize from DATA_FILE. Return (AddressBook, NoteBook).
-    Create DATA_DIR if it doesn't exist. Return empty instances on FileNotFoundError.
-    """
-    pass
+    try:
+        with open(DATA_FILE, "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        return AddressBook(), NoteBook()
