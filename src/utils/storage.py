@@ -3,12 +3,10 @@ from pathlib import Path
 from ..models.address_book import AddressBook
 from ..models.notebook import NoteBook
 
-DATA_DIR = Path.home() / ".assistant"
-DATA_FILE = DATA_DIR / "data.pkl"
+DATA_FILE = Path.cwd() / "data.pkl"
 
 
 def save_data(book, notebook):
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
     with open(DATA_FILE, "wb") as f:
         pickle.dump((book, notebook), f)
 
