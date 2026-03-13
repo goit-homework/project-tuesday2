@@ -29,17 +29,17 @@ class AddressBook(UserDict):
                 results.append(record)
                 continue
 
-            if hasattr(record, "phones"): #search by phone
+            if record not in results and hasattr(record, "phones"):
                 for phone in record.phones:
                     if query in str(phone):
                         results.append(record)
                         break
 
-            if hasattr(record, "email") and record.email: #search by email
+            if record not in results and hasattr(record, "email") and record.email:
                 if query in str(record.email).lower():
                     results.append(record)
 
-            if hasattr(record, "address") and record.address: #search by address
+            if record not in results and hasattr(record, "address") and record.address:
                 if query in str(record.address).lower():
                     results.append(record)
 
