@@ -46,7 +46,7 @@ class NoteBook(UserDict):
         result = []
 
         for note in self.data.values():
-            if tag in note.tags:
+            if note.has_tag(tag):
                 result.append(note)
 
         return result
@@ -56,6 +56,6 @@ class NoteBook(UserDict):
 
         for note in self.data.values():
             for tag in note.tags:
-                tag_dict.setdefault(tag, []).append(note)
+                tag_dict.setdefault(str(tag), []).append(note)
 
         return dict(sorted(tag_dict.items()))
