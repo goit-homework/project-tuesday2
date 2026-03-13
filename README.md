@@ -2,27 +2,27 @@
 
 CLI-бот для управління контактами та нотатками.
 
-## Структура
-
-```
-src/
-  models/
-    fields.py        — Field, Name, Phone, Birthday, Email, Address
-    record.py        — Record (контакт)
-    address_book.py  — AddressBook (колекція контактів)
-    note.py          — Note, Tag
-    notebook.py      — NoteBook (колекція нотаток)
-  utils/
-    decorators.py    — input_error декоратор
-    storage.py       — збереження/завантаження даних (pickle)
-    suggest.py       — підказка найближчої команди
-  main.py            — точка входу, CLI loop
-```
-
-## Запуск
+## Встановлення
 
 ```bash
-python -m src.main
+# Клонувати репозиторій
+git clone https://github.com/goit-homework/project-tuesday2.git
+cd project-tuesday2
+
+# Встановити як пакет
+pip install .
+```
+
+Після встановлення бот доступний з будь-якого місця в системі:
+
+```bash
+assistant-bot
+```
+
+### Альтернативний запуск (без встановлення)
+
+```bash
+python -m assistant_bot.main
 ```
 
 ## Команди
@@ -32,11 +32,11 @@ python -m src.main
 |---------|------|
 | `add <name> <phone>` | Додати контакт |
 | `change <name> <old_phone> <new_phone>` | Змінити телефон |
-| `phone <name>` | Показати телефони |
+| `phone <name>` | Показати контакт |
 | `all` | Показати всі контакти |
 | `add-birthday <name> <DD.MM.YYYY>` | Додати день народження |
 | `show-birthday <name>` | Показати день народження |
-| `birthdays <days>` | Дні народження через N днів |
+| `birthdays [days]` | Дні народження через N днів (за замовч. 7) |
 | `add-email <name> <email>` | Додати email |
 | `edit-email <name> <email>` | Змінити email |
 | `add-address <name> <address>` | Додати адресу |
@@ -67,3 +67,31 @@ python -m src.main
 | `hello` | Привітання |
 | `help` | Список команд |
 | `close` / `exit` | Вихід (автозбереження) |
+
+## Валідація
+
+- **Телефон**: 10-15 цифр, може починатися з `+`
+- **Email**: формат `user@domain.tld`
+- **День народження**: формат `DD.MM.YYYY`
+
+## Збереження даних
+
+Дані зберігаються автоматично при виході (`close`/`exit`) у файл `data.pkl` в поточній директорії.
+
+## Структура проєкту
+
+```
+assistant_bot/
+  bot.py             — AssistantBot (головний клас, команди)
+  main.py            — точка входу
+  models/
+    fields.py        — Field, Name, Phone, Birthday, Email, Address
+    record.py        — Record (контакт)
+    address_book.py  — AddressBook (колекція контактів)
+    note.py          — Note, Tag
+    notebook.py      — NoteBook (колекція нотаток)
+  utils/
+    decorators.py    — command декоратор (реєстрація, валідація, обробка помилок)
+    storage.py       — збереження/завантаження даних (pickle)
+    suggest.py       — підказка найближчої команди (difflib)
+```
