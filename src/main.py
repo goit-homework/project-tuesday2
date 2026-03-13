@@ -249,16 +249,18 @@ class AssistantBot:
                 lines.append(f"  {note}")
         return "\n".join(lines)
 
-    def show_help(self):
-        """Display available commands with descriptions."""
-        print("\nAvailable commands:")
-        print("-" * 70)
+    @command("hello", "Greet the bot")
+    def hello(self, args):
+        return "How can I help you?"
+
+    @command("help", "Show available commands")
+    def show_help(self, args):
+        lines = ["\nAvailable commands:", "-" * 70]
         for cmd_name, cmd in sorted(self.commands.items()):
-            print(f"  {cmd_name:<20} - {cmd.description}")
-        print(f"  hello               - Greet the bot")
-        print(f"  help                - Show this help")
-        print(f"  close / exit        - Exit and save")
-        print("-" * 70)
+            lines.append(f"  {cmd_name:<20} - {cmd.description}")
+        lines.append(f"  {'close / exit':<20} - Exit and save")
+        lines.append("-" * 70)
+        return "\n".join(lines)
 
     def run(self):
         """Main loop."""
@@ -276,10 +278,6 @@ class AssistantBot:
                 save_data(self.book, self.notebook)
                 print("Good bye!")
                 break
-            elif command == "hello":
-                print("How can I help you?")
-            elif command == "help":
-                self.show_help()
             elif command in self.commands:
                 try:
                     cmd = self.commands[command]
